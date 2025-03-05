@@ -8,47 +8,72 @@ on:
         required: true
         default: 'https://transfer.sh/(RECOMMENDED)'
 
-env:
-  RECOVERY_URL: https://oshi.at/Rpjg
-
 jobs:
   build:
     runs-on: ubuntu-20.04
 
     steps:
-    - name: Check Out
-      uses: actions/checkout@main
+    - name: Check Out Repository
+      uses: actions/checkout@v4
 
-    - name: Prepare the environment
+    - name: Prepare the Environment
       run: |
-        sudo apt install git wget lz4 tar openssl python3 -y
-
-    - name: Fetch image from URL
+        echo "🔧 Installing dependencies..."
+        sudo apt update
+        sudo apt install -y git wget lz4 tar openssl python3
+        
+    - name: Fetch Image from URL
       run: |
-        ls
-        pwd
-        wget "${{ github.event.inputs.RECOVERY_URL }}" -O recovery.img
+        echo "🌍 Downloading recovery image from: ${{ github.event.inputs.RECOVERY_URL }}"
+        wget "${{ github.event.inputs.RECOVERY_URL }}" -O r.img
+        
+        echo "📂 Listing files after download:"
+        ls -lh
+        
+        if [ ! -f r.img ]; then
+          echo "❌ ERROR: r.img not found! The download may have failed."
+          exit 1
+        else
+          echo "✅ r.img downloaded successfully!"
+        fi
 
     - name: Patch Process-1
       run: |
-        chmod a+x script1.sh
-        chmod a+x magiskboot
-        ./script1.sh || true
+        echo "🔧 Setting execute permissions..."
+        chmod a+x script1.sh magiskboot
+        echo "🚀 Running script1.sh..."
+        ./script1.sh || echo "⚠️ Warning: script1.sh failed, but continuing."
 
     - name: Patch Process-2
       run: |
+        echo "🔧 Setting execute permissions..."
         chmod a+x script2.sh
-        ./script2.sh || true
+        echo "🚀 Running script2.sh..."
+        ./script2.sh || echo "⚠️ Warning: script2.sh failed, but continuing."
+
+        echo "🔍 Checking if recovery-patched.img exists..."
+        ls -lh
+
+        if [ ! -f recovery-patched.img ]; then
+          echo "❌ ERROR: recovery-patched.img not found! Check script2.sh."
+          exit 1
+        fi
+
+        echo "🔑 Running avbtool to sign recovery image..."
         python3 avbtool extract_public_key --key phh.pem --output phh.pub.bin
-        python3 avbtool add_hash_footer --partition_name recovery --partition_size $(wc -c recovery.img |cut -f 1 -d ' ') --image recovery-patched.img --key phh.pem --algorithm SHA256_RSA4096
-        mkdir output && cd output
+        python3 avbtool add_hash_footer --partition_name recovery \
+            --partition_size $(wc -c recovery-patched.img | cut -f1 -d ' ') \
+            --image recovery-patched.img --key phh.pem --algorithm SHA256_RSA4096
+
+        echo "📁 Creating output directory..."
+        mkdir -p output && cd output
         mv ../recovery-patched.img recovery.img
         tar cvf fastbootd-recovery.tar recovery.img
-        md5sum -t fastbootd-recovery.tar >> fastbootd-recovery.tar
-        mv fastbootd-recovery.tar fastbootd-recovery.tar.md5
+        md5sum fastbootd-recovery.tar >> fastbootd-recovery.tar.md5
+        mv fastbootd-recovery.tar.md5 fastbootd-recovery.tar
 
     - name: Upload Recovery
-      uses: actions/upload-artifact@v4.0.0
+      uses: actions/upload-artifact@v4
       with:
-        path: /home/runner/work/Patch-Recovery/Patch-Recovery/output/*.md5
+        path: output/fastbootd-recovery.tar
         name: Patched-Recovery
