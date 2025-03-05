@@ -30,4 +30,4 @@ else
     echo "✅ 'phh.pem' already exists, skipping key generation."
 fi
 
-echo "🎉 Script completed successfully!"
+echo "✅ Script completed successfully!"
