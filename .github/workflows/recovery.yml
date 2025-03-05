@@ -2,11 +2,6 @@ name: RECOVERY
 
 on:
   workflow_dispatch:
-    inputs:
-      RECOVERY_URL:
-        description: 'RECOVERY URL'
-        required: true
-        default: 'https://transfer.sh/(RECOMMENDED)'
 
 jobs:
   build:
@@ -24,8 +19,8 @@ jobs:
         
     - name: Fetch Image from URL
       run: |
-        echo "🌍 Downloading recovery image from: ${{ github.event.inputs.RECOVERY_URL }}"
-        wget "${{ github.event.inputs.RECOVERY_URL }}" -O recovery.img.lz4
+        echo "🌍 Downloading recovery image"
+        wget "https://docs.google.com/uc?export=download&id=1ugXOGICMKBVIpIhp5U5JuBxOP5Dynj9J" -O recovery.img.lz4
         
         echo "📂 Listing files after download:"
         ls -lh
