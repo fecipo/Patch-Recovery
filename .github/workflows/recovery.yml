@@ -25,16 +25,16 @@ jobs:
     - name: Fetch Image from URL
       run: |
         echo "🌍 Downloading recovery image from: ${{ github.event.inputs.RECOVERY_URL }}"
-        wget "${{ github.event.inputs.RECOVERY_URL }}" -O r.img
+        wget "${{ github.event.inputs.RECOVERY_URL }}" -O recovery.img.lz4
         
         echo "📂 Listing files after download:"
         ls -lh
         
-        if [ ! -f r.img ]; then
-          echo "❌ ERROR: r.img not found! The download may have failed."
+        if [ ! -f recovery.img.lz4 ]; then
+          echo "❌ ERROR: recovery.img.lz4 not found! The download may have failed."
           exit 1
         else
-          echo "✅ r.img downloaded successfully!"
+          echo "✅ recovery.img.lz4 downloaded successfully!"
         fi
 
     - name: Patch Process-1
